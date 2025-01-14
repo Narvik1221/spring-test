@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Search Engine</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #f4f4f9;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      form {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      input[type="text"] {
+        width: 70%;
+        padding: 10px;
+        font-size: 16px;
+        margin-right: 10px;
+      }
+
+      button {
+        padding: 10px 20px;
+        font-size: 16px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background-color: #0056b3;
+      }
+
+      .results {
+        margin-top: 30px;
+        padding: 20px;
+        background-color: white;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .result {
+        margin-bottom: 15px;
+      }
+
+      .result a {
+        color: #007bff;
+        text-decoration: none;
+      }
+
+      .result a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Search Engine</h1>
+    </header>
+
+    <!-- Search Form -->
+    <form id="searchForm">
+      <div>
+        <label for="siteSelect">Выберите сайт:</label>
+        <select id="siteSelect">
+          <option value="">Все сайты</option>
+          <!-- Опция по умолчанию -->
+        </select>
+      </div>
+      <div>
+        <label for="searchInput">Введите запрос:</label>
+        <input
+          type="text"
+          id="searchInput"
+          placeholder="Введите слова для поиска"
+        />
+        <button id="searchButton">Поиск</button>
+      </div>
+      <div id="results">
+        <h3>Результаты поиска:</h3>
+        <div id="resultsList"></div>
+      </div>
+    </form>
+
+    <!-- Start Indexing Button -->
+    <div style="text-align: center">
+      <button id="startIndexing">Start Indexing</button>
+      <button id="stopIndexing" style="background-color: #dc3545">
+        Stop Indexing
+      </button>
+    </div>
+
+    <!-- Search Results -->
+    <div id="results" class="results" style="display: none">
+      <h2>Search Results:</h2>
+      <div id="resultsList"></div>
+    </div>
+
+    <div id="addSiteForm">
+      <h3>Добавить новый сайт</h3>
+      <input type="text" id="siteUrl" placeholder="Введите URL сайта" />
+      <input type="text" id="siteName" placeholder="Введите имя сайта" />
+      <button id="addSiteButton">Добавить сайт</button>
+    </div>
+
+    <script>
+      // API endpoints
+      const API_BASE_URL = "http://localhost:8082/api"; // Update this if necessary
+
+      // Загрузка списка сайтов в select
+      async function loadSites() {
+        try {
+          const response = await fetch(`${API_BASE_URL}/sites`);
+          if (!response.ok) {
+            throw new Error("Ошибка при загрузке списка сайтов");
+          }
+
+          const sites = await response.json();
+          const siteSelect = document.getElementById("siteSelect");
+
+          sites.forEach((site) => {
+            const option = document.createElement("option");
+            option.value = site.url;
+            option.textContent = site.name;
+            siteSelect.appendChild(option);
+          });
+        } catch (error) {
+          console.error("Ошибка загрузки сайтов:", error);
+          alert("Не удалось загрузить список сайтов.");
+        }
+      }
+
+      // Form submission handler
+      document
+        .getElementById("searchForm")
+        .addEventListener("submit", async function (event) {
+          event.preventDefault();
+          const query = document.getElementById("query").value;
+          if (!query) {
+            alert("Please enter a search query.");
+            return;
+          }
+
+          try {
+            const response = await fetch(`${API_BASE_URL}/search`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ query }),
+            });
+            console.log(response);
+            if (!response.ok) {
+              throw new Error("Failed to fetch search results.");
+            }
+
+            const data = await response.json();
+            displayResults(data);
+          } catch (error) {
+            console.error("Error:", error);
+            alert("An error occurred while fetching search results.");
+          }
+        });
+
+      // Start indexing handler
+      document
+        .getElementById("startIndexing")
+        .addEventListener("click", async function () {
+          try {
+            const response = await fetch(`${API_BASE_URL}/startIndexing`, {
+              method: "POST", // Используем POST вместо GET
+            });
+            console.log(response);
+            if (!response.ok) {
+              throw new Error("Failed to start indexing.");
+            }
+
+            alert("Indexing started successfully!");
+          } catch (error) {
+            console.error("Error:", error);
+            alert("An error occurred while starting indexing.");
+          }
+        });
+      // Stop indexing handler
+      document
+        .getElementById("stopIndexing")
+        .addEventListener("click", async function () {
+          try {
+            const response = await fetch(`${API_BASE_URL}/stopIndexing`, {
+              method: "POST",
+            });
+
+            if (!response.ok) {
+              throw new Error("Failed to stop indexing.");
+            }
+
+            alert("Indexing stopped successfully!");
+          } catch (error) {
+            console.error("Error:", error);
+            alert("An error occurred while stopping indexing.");
+          }
+        });
+
+      document
+        .getElementById("addSiteButton")
+        .addEventListener("click", async function () {
+          const url = document.getElementById("siteUrl").value.trim();
+          const name = document.getElementById("siteName").value.trim();
+          console.log(url);
+          if (!url || !name) {
+            alert("Введите корректные данные для URL и имени сайта.");
+            return;
+          }
+
+          try {
+            const response = await fetch("/api/addSite", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ url, name }),
+            });
+
+            const result = await response.text();
+            if (response.ok) {
+              alert("Сайт успешно добавлен!");
+            } else {
+              alert(`Ошибка: ${result}`);
+            }
+          } catch (error) {
+            console.error("Ошибка при добавлении сайта:", error);
+            alert("Произошла ошибка при добавлении сайта.");
+          }
+        });
+
+      // Function to display search results
+      function displayResults(data) {
+        const resultsDiv = document.getElementById("results");
+        const resultsList = document.getElementById("resultsList");
+
+        resultsList.innerHTML = "";
+
+        if (data && data.length > 0) {
+          data.forEach((result) => {
+            console.log(result.url);
+            const resultDiv = document.createElement("div");
+            resultDiv.classList.add("result");
+            resultDiv.innerHTML = `<a href="${result.url}" target="_blank">${
+              result.title || result.url
+            }</a>`;
+            resultsList.appendChild(resultDiv);
+          });
+        } else {
+          resultsList.innerHTML = "<p>No results found.</p>";
+        }
+
+        resultsDiv.style.display = "block";
+      }
+    </script>
+  </body>
+</html>

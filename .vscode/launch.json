@@ -1,0 +1,24 @@
+{
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Spring Boot-DemoApplication<demo>",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "mainClass": "com.example.demo.DemoApplication",
+      "projectName": "demo",
+      "args": "",
+      "envFile": "${workspaceFolder}/.env"
+    },
+    {
+      "type": "java",
+      "name": "Spring Boot-SearchEngineApplication<demo>",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "mainClass": "searchengine.SearchEngineApplication",
+      "projectName": "demo",
+      "args": "",
+      "envFile": "${workspaceFolder}/.env"
+    }
+  ]
+}
