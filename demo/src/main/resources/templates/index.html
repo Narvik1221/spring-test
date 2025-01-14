@@ -116,8 +116,7 @@
     </div>
 
     <script>
-      // API endpoints
-      const API_BASE_URL = "http://localhost:8082/api"; // Update this if necessary
+      const API_BASE_URL = "http://localhost:8082/api";
 
       // Загрузка списка сайтов в select
       async function loadSites() {
@@ -129,6 +128,9 @@
 
           const sites = await response.json();
           const siteSelect = document.getElementById("siteSelect");
+
+          // Очистка select перед добавлением
+          siteSelect.innerHTML = '<option value="">Все сайты</option>';
 
           sites.forEach((site) => {
             const option = document.createElement("option");
@@ -142,14 +144,17 @@
         }
       }
 
-      // Form submission handler
+      // Обработчик формы поиска
       document
         .getElementById("searchForm")
         .addEventListener("submit", async function (event) {
           event.preventDefault();
-          const query = document.getElementById("query").value;
+
+          const query = document.getElementById("searchInput").value.trim();
+          const siteUrl = document.getElementById("siteSelect").value; // Получение выбранного сайта
+
           if (!query) {
-            alert("Please enter a search query.");
+            alert("Введите поисковый запрос.");
             return;
           }
 
@@ -159,93 +164,25 @@
               headers: {
                 "Content-Type": "application/json",
               },
-              body: JSON.stringify({ query }),
+              body: JSON.stringify({ query, site: siteUrl }),
             });
-            console.log(response);
+
             if (!response.ok) {
-              throw new Error("Failed to fetch search results.");
+              throw new Error("Не удалось выполнить поиск.");
             }
 
             const data = await response.json();
             displayResults(data);
           } catch (error) {
-            console.error("Error:", error);
-            alert("An error occurred while fetching search results.");
+            console.error("Ошибка выполнения поиска:", error);
+            alert("Произошла ошибка при выполнении поиска.");
           }
         });
 
-      // Start indexing handler
-      document
-        .getElementById("startIndexing")
-        .addEventListener("click", async function () {
-          try {
-            const response = await fetch(`${API_BASE_URL}/startIndexing`, {
-              method: "POST", // Используем POST вместо GET
-            });
-            console.log(response);
-            if (!response.ok) {
-              throw new Error("Failed to start indexing.");
-            }
+      // Загрузка списка сайтов при загрузке страницы
+      document.addEventListener("DOMContentLoaded", loadSites);
 
-            alert("Indexing started successfully!");
-          } catch (error) {
-            console.error("Error:", error);
-            alert("An error occurred while starting indexing.");
-          }
-        });
-      // Stop indexing handler
-      document
-        .getElementById("stopIndexing")
-        .addEventListener("click", async function () {
-          try {
-            const response = await fetch(`${API_BASE_URL}/stopIndexing`, {
-              method: "POST",
-            });
-
-            if (!response.ok) {
-              throw new Error("Failed to stop indexing.");
-            }
-
-            alert("Indexing stopped successfully!");
-          } catch (error) {
-            console.error("Error:", error);
-            alert("An error occurred while stopping indexing.");
-          }
-        });
-
-      document
-        .getElementById("addSiteButton")
-        .addEventListener("click", async function () {
-          const url = document.getElementById("siteUrl").value.trim();
-          const name = document.getElementById("siteName").value.trim();
-          console.log(url);
-          if (!url || !name) {
-            alert("Введите корректные данные для URL и имени сайта.");
-            return;
-          }
-
-          try {
-            const response = await fetch("/api/addSite", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ url, name }),
-            });
-
-            const result = await response.text();
-            if (response.ok) {
-              alert("Сайт успешно добавлен!");
-            } else {
-              alert(`Ошибка: ${result}`);
-            }
-          } catch (error) {
-            console.error("Ошибка при добавлении сайта:", error);
-            alert("Произошла ошибка при добавлении сайта.");
-          }
-        });
-
-      // Function to display search results
+      // Функция для отображения результатов поиска
       function displayResults(data) {
         const resultsDiv = document.getElementById("results");
         const resultsList = document.getElementById("resultsList");
@@ -254,7 +191,6 @@
 
         if (data && data.length > 0) {
           data.forEach((result) => {
-            console.log(result.url);
             const resultDiv = document.createElement("div");
             resultDiv.classList.add("result");
             resultDiv.innerHTML = `<a href="${result.url}" target="_blank">${
@@ -263,7 +199,7 @@
             resultsList.appendChild(resultDiv);
           });
         } else {
-          resultsList.innerHTML = "<p>No results found.</p>";
+          resultsList.innerHTML = "<p>Результаты не найдены.</p>";
         }
 
         resultsDiv.style.display = "block";
