@@ -4,6 +4,7 @@ public class SearchResult {
     private String url;
     private String title;
     private String snippet;
+    private double relevance; // Новое поле для относительной релевантности
 
     public SearchResult(String baseUrl, String path, String title, String snippet) {
         this.url = baseUrl + path; // Формирование полного URL
@@ -15,6 +16,13 @@ public class SearchResult {
         this.url = url;
         this.title = title;
         this.snippet = snippet;
+    }
+
+    public SearchResult(String baseUrl, String path, String title, String snippet, Double relevance) {
+        this.url = baseUrl + path; // Формирование полного URL
+        this.title = title;
+        this.snippet = snippet;
+        this.relevance = relevance != null ? relevance : 0.0; // Обработка null для relevance
     }
 
     // Getters и Setters
@@ -40,5 +48,13 @@ public class SearchResult {
 
     public void setSnippet(String snippet) {
         this.snippet = snippet;
+    }
+
+    public double getRelevance() {
+        return relevance;
+    }
+
+    public void setRelevance(double relevance) {
+        this.relevance = relevance;
     }
 }

@@ -118,6 +118,43 @@
     <script>
       const API_BASE_URL = "http://localhost:8082/api";
 
+      document
+        .getElementById("startIndexing")
+        .addEventListener("click", async function () {
+          try {
+            const response = await fetch(`${API_BASE_URL}/startIndexing`, {
+              method: "POST", // Используем POST вместо GET
+            });
+            console.log(response);
+            if (!response.ok) {
+              throw new Error("Failed to start indexing.");
+            }
+
+            alert("Indexing started successfully!");
+          } catch (error) {
+            console.error("Error:", error);
+            alert("An error occurred while starting indexing.");
+          }
+        });
+      // Stop indexing handler
+      document
+        .getElementById("stopIndexing")
+        .addEventListener("click", async function () {
+          try {
+            const response = await fetch(`${API_BASE_URL}/stopIndexing`, {
+              method: "POST",
+            });
+
+            if (!response.ok) {
+              throw new Error("Failed to stop indexing.");
+            }
+
+            alert("Indexing stopped successfully!");
+          } catch (error) {
+            console.error("Error:", error);
+            alert("An error occurred while stopping indexing.");
+          }
+        });
       // Загрузка списка сайтов в select
       async function loadSites() {
         try {
@@ -182,26 +219,50 @@
       // Загрузка списка сайтов при загрузке страницы
       document.addEventListener("DOMContentLoaded", loadSites);
 
-      // Функция для отображения результатов поиска
       function displayResults(data) {
         const resultsDiv = document.getElementById("results");
         const resultsList = document.getElementById("resultsList");
 
+        // Очищаем список результатов
         resultsList.innerHTML = "";
 
         if (data && data.length > 0) {
           data.forEach((result) => {
+            const relevance = document.createElement("p");
             const resultDiv = document.createElement("div");
             resultDiv.classList.add("result");
-            resultDiv.innerHTML = `<a href="${result.url}" target="_blank">${
-              result.title || result.url
-            }</a>`;
+
+            // Создаём заголовок с ссылкой
+            const titleLink = document.createElement("a");
+            titleLink.href = result.url;
+            titleLink.target = "_blank";
+            titleLink.textContent = result.title || result.url;
+            titleLink.style.fontWeight = "bold";
+            titleLink.style.fontSize = "18px";
+
+            // Убираем HTML-теги из сниппета
+            const cleanSnippet = result.snippet
+              .replace(/<\/?[^>]+(>|$)/g, "")
+              .trim();
+
+            // Создаём сниппет
+            const snippet = document.createElement("p");
+            snippet.textContent = cleanSnippet || "Описание отсутствует";
+            snippet.style.marginTop = "5px";
+            relevance.textContent = `Релевантность: ${result.relevance.toFixed(
+              2
+            )}`;
+            // Добавляем заголовок и сниппет в результат
+            resultDiv.appendChild(titleLink);
+            resultDiv.appendChild(snippet);
+            resultDiv.appendChild(relevance);
             resultsList.appendChild(resultDiv);
           });
         } else {
           resultsList.innerHTML = "<p>Результаты не найдены.</p>";
         }
 
+        // Отображаем блок результатов
         resultsDiv.style.display = "block";
       }
     </script>
