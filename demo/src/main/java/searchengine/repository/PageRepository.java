@@ -17,4 +17,8 @@ public interface PageRepository extends JpaRepository<Page, Long> {
     long count(); // Метод для подсчёта общего количества страниц
    @Transactional
     void deleteBySite(Site site);
+
+    List<Page> findAllBySite(Site site);
+
+    long countBySite(Site site);
 }

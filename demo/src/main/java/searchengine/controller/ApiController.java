@@ -8,8 +8,12 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import searchengine.dto.SearchRequest;
 import searchengine.dto.SearchResult;
+import searchengine.dto.StatisticsResponse;
+import searchengine.model.Lemma;
+import searchengine.model.Page;
 import searchengine.service.IndexingService;
 import searchengine.service.SearchService;
+import searchengine.service.StatisticsService;
 
 import java.util.List;
 
@@ -21,10 +25,12 @@ public class ApiController {
 
     private final IndexingService indexingService;
     private final SearchService searchService;
+    private final StatisticsService statisticsService; // Добавлено поле для StatisticsService
 
-    public ApiController(IndexingService indexingService, SearchService searchService) {
+    public ApiController(IndexingService indexingService, SearchService searchService, StatisticsService statisticsService) {
         this.indexingService = indexingService;
         this.searchService = searchService;
+        this.statisticsService = statisticsService; // Инициализация StatisticsService
     }
 
     @PostMapping("/startIndexing")
@@ -70,12 +76,44 @@ public class ApiController {
                     .body("Произошла ошибка при выполнении поиска");
         }
     }
-    
-    
-    // Метод для отображения index.html
+
     @GetMapping("/")
     public String index() {
         logger.info("Запрос на отображение index.html");
         return "index";
+    }
+
+    // Возвращает общую статистику
+    @GetMapping("/statistics")
+    public ResponseEntity<StatisticsResponse> getStatistics() {
+        logger.info("Запрос на получение общей статистики");
+        StatisticsResponse response = statisticsService.getStatistics();
+        return ResponseEntity.ok(response);
+    }
+
+    // Возвращает список лемм для указанного сайта
+    @GetMapping("/statistics/lemmas")
+    public ResponseEntity<List<Lemma>> getLemmasBySite(@RequestParam String siteUrl) {
+        logger.info("Запрос на получение лемм для сайта: {}", siteUrl);
+        try {
+            List<Lemma> lemmas = statisticsService.getLemmasBySite(siteUrl);
+            return ResponseEntity.ok(lemmas);
+        } catch (RuntimeException e) {
+            logger.error("Ошибка при получении лемм для сайта: {}", siteUrl, e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+    }
+
+    // Возвращает список страниц для указанного сайта
+    @GetMapping("/statistics/pages")
+    public ResponseEntity<List<Page>> getPagesBySite(@RequestParam String siteUrl) {
+        logger.info("Запрос на получение страниц для сайта: {}", siteUrl);
+        try {
+            List<Page> pages = statisticsService.getPagesBySite(siteUrl);
+            return ResponseEntity.ok(pages);
+        } catch (RuntimeException e) {
+            logger.error("Ошибка при получении страниц для сайта: {}", siteUrl, e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
     }
 }

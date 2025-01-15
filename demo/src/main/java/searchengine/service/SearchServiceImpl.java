@@ -1,5 +1,6 @@
 package searchengine.service;
 
+import org.jsoup.Jsoup;
 import org.springframework.stereotype.Service;
 import searchengine.dto.SearchResult;
 import searchengine.model.Index;
@@ -142,7 +143,7 @@ public class SearchServiceImpl implements SearchService {
     private List<SearchResult> buildSearchResults(List<Page> pages, Map<Page, Double> relevanceMap, String query) {
         List<SearchResult> results = new ArrayList<>();
         for (Page page : pages) {
-            String snippet = generateSnippet(page.getContent(), query);
+            String snippet = generateSnippet(page.getContent(), query); // Передаём запрос
             results.add(new SearchResult(page.getSite().getUrl(), page.getPath(), page.getSite().getName(),
                     snippet, relevanceMap.get(page)));
         }
@@ -150,14 +151,51 @@ public class SearchServiceImpl implements SearchService {
     }
 
     private String generateSnippet(String content, String query) {
-        // Генерация фрагмента текста с выделением запроса
-        int index = content.toLowerCase().indexOf(query.toLowerCase());
-        if (index == -1) {
-            return "";
+        // Лемматизируем запрос
+        Map<String, Integer> queryLemmas = lemmaService.lemmatize(query);
+        if (queryLemmas.isEmpty()) {
+            return ""; // Если запрос не дал лемм
         }
-        int snippetStart = Math.max(0, index - 30);
-        int snippetEnd = Math.min(content.length(), index + query.length() + 30);
-        String snippet = content.substring(snippetStart, snippetEnd).replaceAll("\n", " ");
-        return snippet.replaceAll("(?i)(" + query + ")", "<b>$1</b>");
+    
+        // Очищаем текст от HTML-тегов
+        String plainText = Jsoup.parse(content).text();
+    
+        // Разбиваем текст на слова
+        String[] words = plainText.split("\\s+");
+    
+        // Поиск слов из запроса в тексте
+        StringBuilder snippetBuilder = new StringBuilder();
+        int contextWindow = 5; // Количество слов до и после найденного
+    
+        for (int i = 0; i < words.length; i++) {
+            String word = words[i].replaceAll("[^a-zA-Zа-яА-ЯёЁ]", ""); // Убираем знаки препинания
+            Map<String, Integer> wordLemmas = lemmaService.lemmatize(word);
+    
+            // Проверяем, есть ли совпадения лемм
+            boolean containsQueryWord = queryLemmas.keySet().stream()
+                    .anyMatch(wordLemmas::containsKey);
+    
+            if (containsQueryWord) {
+                // Добавляем контекст вокруг найденного слова
+                int start = Math.max(0, i - contextWindow);
+                int end = Math.min(words.length, i + contextWindow + 1);
+    
+                for (int j = start; j < end; j++) {
+                    snippetBuilder.append(words[j]).append(" ");
+                }
+    
+                snippetBuilder.append("... "); // Отделяем фрагменты
+            }
+    
+            // Ограничиваем длину сниппета
+            if (snippetBuilder.length() > 50) {
+                break;
+            }
+        }
+    
+        String snippet = snippetBuilder.toString().trim();
+        return snippet.length() > 0 ? snippet : "Нет подходящего сниппета.";
     }
+    
+
 }

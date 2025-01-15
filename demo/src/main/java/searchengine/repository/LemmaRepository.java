@@ -18,4 +18,9 @@ public interface LemmaRepository extends JpaRepository<Lemma, Integer> {
     List<Lemma> findByLemmaIn(Set<String> lemmaTexts);
     @Transactional
     void deleteBySite(Site site);
+
+    List<Lemma> findAllBySite(Site site);
+
+    long countBySite(Site site);
+
 }

@@ -4,267 +4,130 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Search Engine</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        margin: 0;
-        padding: 20px;
-        background-color: #f4f4f9;
-      }
-
-      header {
-        text-align: center;
-        margin-bottom: 30px;
-      }
-
-      form {
-        text-align: center;
-        margin-bottom: 20px;
-      }
-
-      input[type="text"] {
-        width: 70%;
-        padding: 10px;
-        font-size: 16px;
-        margin-right: 10px;
-      }
-
-      button {
-        padding: 10px 20px;
-        font-size: 16px;
-        background-color: #007bff;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-      }
-
-      button:hover {
-        background-color: #0056b3;
-      }
-
-      .results {
-        margin-top: 30px;
-        padding: 20px;
-        background-color: white;
-        border-radius: 5px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-      }
-
-      .result {
-        margin-bottom: 15px;
-      }
-
-      .result a {
-        color: #007bff;
-        text-decoration: none;
-      }
-
-      .result a:hover {
-        text-decoration: underline;
-      }
-    </style>
-  </head>
-  <body>
-    <header>
-      <h1>Search Engine</h1>
-    </header>
-
-    <!-- Search Form -->
-    <form id="searchForm">
-      <div>
-        <label for="siteSelect">Выберите сайт:</label>
-        <select id="siteSelect">
-          <option value="">Все сайты</option>
-          <!-- Опция по умолчанию -->
-        </select>
-      </div>
-      <div>
-        <label for="searchInput">Введите запрос:</label>
-        <input
-          type="text"
-          id="searchInput"
-          placeholder="Введите слова для поиска"
-        />
-        <button id="searchButton">Поиск</button>
-      </div>
-      <div id="results">
-        <h3>Результаты поиска:</h3>
-        <div id="resultsList"></div>
-      </div>
-    </form>
-
-    <!-- Start Indexing Button -->
-    <div style="text-align: center">
-      <button id="startIndexing">Start Indexing</button>
-      <button id="stopIndexing" style="background-color: #dc3545">
-        Stop Indexing
-      </button>
-    </div>
-
-    <!-- Search Results -->
-    <div id="results" class="results" style="display: none">
-      <h2>Search Results:</h2>
-      <div id="resultsList"></div>
-    </div>
-
-    <div id="addSiteForm">
-      <h3>Добавить новый сайт</h3>
-      <input type="text" id="siteUrl" placeholder="Введите URL сайта" />
-      <input type="text" id="siteName" placeholder="Введите имя сайта" />
-      <button id="addSiteButton">Добавить сайт</button>
-    </div>
-
+    <link rel="stylesheet" href="/assets/css/style.css" />
     <script>
-      const API_BASE_URL = "http://localhost:8082/api";
-
-      document
-        .getElementById("startIndexing")
-        .addEventListener("click", async function () {
-          try {
-            const response = await fetch(`${API_BASE_URL}/startIndexing`, {
-              method: "POST", // Используем POST вместо GET
-            });
-            console.log(response);
-            if (!response.ok) {
-              throw new Error("Failed to start indexing.");
-            }
-
-            alert("Indexing started successfully!");
-          } catch (error) {
-            console.error("Error:", error);
-            alert("An error occurred while starting indexing.");
-          }
-        });
-      // Stop indexing handler
-      document
-        .getElementById("stopIndexing")
-        .addEventListener("click", async function () {
-          try {
-            const response = await fetch(`${API_BASE_URL}/stopIndexing`, {
-              method: "POST",
-            });
-
-            if (!response.ok) {
-              throw new Error("Failed to stop indexing.");
-            }
-
-            alert("Indexing stopped successfully!");
-          } catch (error) {
-            console.error("Error:", error);
-            alert("An error occurred while stopping indexing.");
-          }
-        });
-      // Загрузка списка сайтов в select
-      async function loadSites() {
-        try {
-          const response = await fetch(`${API_BASE_URL}/sites`);
-          if (!response.ok) {
-            throw new Error("Ошибка при загрузке списка сайтов");
-          }
-
-          const sites = await response.json();
-          const siteSelect = document.getElementById("siteSelect");
-
-          // Очистка select перед добавлением
-          siteSelect.innerHTML = '<option value="">Все сайты</option>';
-
-          sites.forEach((site) => {
-            const option = document.createElement("option");
-            option.value = site.url;
-            option.textContent = site.name;
-            siteSelect.appendChild(option);
-          });
-        } catch (error) {
-          console.error("Ошибка загрузки сайтов:", error);
-          alert("Не удалось загрузить список сайтов.");
-        }
-      }
-
-      // Обработчик формы поиска
-      document
-        .getElementById("searchForm")
-        .addEventListener("submit", async function (event) {
-          event.preventDefault();
-
-          const query = document.getElementById("searchInput").value.trim();
-          const siteUrl = document.getElementById("siteSelect").value; // Получение выбранного сайта
-
-          if (!query) {
-            alert("Введите поисковый запрос.");
-            return;
-          }
-
-          try {
-            const response = await fetch(`${API_BASE_URL}/search`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ query, site: siteUrl }),
-            });
-
-            if (!response.ok) {
-              throw new Error("Не удалось выполнить поиск.");
-            }
-
-            const data = await response.json();
-            displayResults(data);
-          } catch (error) {
-            console.error("Ошибка выполнения поиска:", error);
-            alert("Произошла ошибка при выполнении поиска.");
-          }
+      function showTab(tabId, element) {
+        // Скрыть все вкладки
+        document.querySelectorAll(".tab-content").forEach((tab) => {
+          tab.classList.remove("active");
         });
 
-      // Загрузка списка сайтов при загрузке страницы
-      document.addEventListener("DOMContentLoaded", loadSites);
+        // Показать выбранную вкладку
+        document.getElementById(tabId).classList.add("active");
 
-      function displayResults(data) {
-        const resultsDiv = document.getElementById("results");
-        const resultsList = document.getElementById("resultsList");
+        // Удалить активный класс со всех ссылок
+        document.querySelectorAll(".sidebar a").forEach((link) => {
+          link.classList.remove("active");
+        });
 
-        // Очищаем список результатов
-        resultsList.innerHTML = "";
-
-        if (data && data.length > 0) {
-          data.forEach((result) => {
-            const relevance = document.createElement("p");
-            const resultDiv = document.createElement("div");
-            resultDiv.classList.add("result");
-
-            // Создаём заголовок с ссылкой
-            const titleLink = document.createElement("a");
-            titleLink.href = result.url;
-            titleLink.target = "_blank";
-            titleLink.textContent = result.title || result.url;
-            titleLink.style.fontWeight = "bold";
-            titleLink.style.fontSize = "18px";
-
-            // Убираем HTML-теги из сниппета
-            const cleanSnippet = result.snippet
-              .replace(/<\/?[^>]+(>|$)/g, "")
-              .trim();
-
-            // Создаём сниппет
-            const snippet = document.createElement("p");
-            snippet.textContent = cleanSnippet || "Описание отсутствует";
-            snippet.style.marginTop = "5px";
-            relevance.textContent = `Релевантность: ${result.relevance.toFixed(
-              2
-            )}`;
-            // Добавляем заголовок и сниппет в результат
-            resultDiv.appendChild(titleLink);
-            resultDiv.appendChild(snippet);
-            resultDiv.appendChild(relevance);
-            resultsList.appendChild(resultDiv);
-          });
-        } else {
-          resultsList.innerHTML = "<p>Результаты не найдены.</p>";
-        }
-
-        // Отображаем блок результатов
-        resultsDiv.style.display = "block";
+        // Добавить активный класс к текущей ссылке
+        element.classList.add("active");
       }
     </script>
+  </head>
+  <body>
+    <div class="sidebar">
+      <a href="#" id="dashboard-tab" onclick="showTab('dashboard', this)"
+        >Dashboard</a
+      >
+      <a href="#" id="management-tab" onclick="showTab('management', this)"
+        >Management</a
+      >
+      <a href="#" id="search-tab" onclick="showTab('search', this)">Search</a>
+    </div>
+    <div class="content">
+      <!-- Dashboard Tab -->
+      <div id="dashboard" class="tab-content active">
+        <header>
+          <h1>Dashboard</h1>
+        </header>
+        <h2>Общая статистика</h2>
+        <div id="overall-stats">
+          <p>Общее количество страниц: <span id="total-pages"></span></p>
+          <p>Общее количество лемм: <span id="total-lemmas"></span></p>
+        </div>
+        <h2>Статистика по сайтам</h2>
+        <select id="site-select">
+          <option value="" disabled selected>Выберите сайт</option>
+        </select>
+        <div id="site-stats">
+          <h3>Информация по сайту</h3>
+          <p>URL: <span id="site-url"></span></p>
+          <p>Имя: <span id="site-name"></span></p>
+          <p>Количество страниц: <span id="site-pages"></span></p>
+          <p>Количество лемм: <span id="site-lemmas"></span></p>
+        </div>
+      </div>
+
+      <!-- Management Tab -->
+      <div id="management" class="tab-content">
+        <header>
+          <h1>Management</h1>
+        </header>
+        <div id="addSiteForm" style="margin-bottom: 20px">
+          <h3>Добавить новый сайт</h3>
+          <input
+            type="text"
+            id="siteUrl"
+            placeholder="Введите URL сайта"
+            style="padding: 10px; width: 60%; margin-bottom: 10px"
+          />
+          <br />
+          <input
+            type="text"
+            id="siteName"
+            placeholder="Введите имя сайта"
+            style="padding: 10px; width: 60%; margin-bottom: 10px"
+          />
+          <br />
+          <button id="addSiteButton">Добавить сайт</button>
+        </div>
+        <div class="index-list-site">
+          <input
+            id="siteUrlInput"
+            type="text"
+            placeholder="Введите URL сайта для индексации"
+            style="padding: 10px; width: 60%; font-size: 16px"
+          />
+          <button id="indexSiteButton">Начать индексацию</button>
+        </div>
+        <div class="index-list">
+          <button id="startIndexing">Глобальная индексация</button>
+          <button id="stopIndexing" style="background-color: #dc3545">
+            Остановить индексацию
+          </button>
+        </div>
+      </div>
+
+      <!-- Search Tab -->
+      <div id="search" class="tab-content">
+        <header>
+          <h1>Search</h1>
+        </header>
+        <form id="searchForm">
+          <div>
+            <label for="siteSelect">Выберите сайт:</label>
+            <select id="siteSelect">
+              <option value="">Все сайты</option>
+              <!-- Опция по умолчанию -->
+            </select>
+          </div>
+          <div class="search-list">
+            <label for="searchInput">Введите запрос:</label>
+            <input
+              type="text"
+              id="searchInput"
+              placeholder="Введите слова для поиска"
+            />
+            <button id="searchButton">Поиск</button>
+          </div>
+          <div id="results">
+            <h3>Результаты поиска:</h3>
+            <div id="resultsList"></div>
+          </div>
+        </form>
+      </div>
+    </div>
+    <script src="/assets/js/script.js"></script>
   </body>
 </html>
