@@ -94,7 +94,7 @@ mvn clean install
 mvn spring-boot:run
 ```
 
-Приложение будет доступно по адресу: http://localhost:8080
+Приложение будет доступно по адресу: http://localhost:8082
 
 ### 6. Тестирование приложения
 
